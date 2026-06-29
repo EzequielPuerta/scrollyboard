@@ -1,42 +1,32 @@
-# sv
+# scrollyboard
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Editor visual de scrollytelling. PoC que integra dos paquetes propios — [`@fundar/data-scrolly-telling`](https://www.npmjs.com/package/@fundar/data-scrolly-telling) y [`@fundar/data-chart-telling`](https://www.npmjs.com/package/@fundar/data-chart-telling) — en una interfaz web para construir y previsualizar historias de datos con MongoDB como backend.
 
-## Creating a project
+## Configuración del entorno
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+Copiá el archivo de ejemplo y ajustá los valores según el entorno:
 
 ```sh
-# recreate this project
-pnpm dlx sv@0.16.1 create --template minimal --types ts --add prettier eslint --install pnpm scrollyboard
+cp .env.example .env
 ```
 
-## Developing
+| Variable | Descripción |
+|---|---|
+| `NODE_ENV` | `development` para dev, `production` para producción |
+| `MONGODB_URI` | URI de conexión a MongoDB |
+| `PORT` | Puerto en el que corre la app (default `5173`) |
+| `HOST` | Host de escucha (usar `0.0.0.0` en Docker) |
+| `PROTOCOL_HEADER` | Header para detectar el protocolo real (útil con ngrok/proxy) |
+| `HOST_HEADER` | Header para detectar el host real |
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Levantar con Docker
 
 ```sh
-npm run dev
+# Desarrollo (hot reload)
+NODE_ENV=development docker compose up
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Producción (build + servidor node)
+NODE_ENV=production docker compose up
 ```
 
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+El modo de arranque lo decide el Dockerfile según `NODE_ENV`: en desarrollo corre el servidor de Vite con hot reload; en producción hace el build y sirve con el adapter-node.
