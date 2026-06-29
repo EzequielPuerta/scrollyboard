@@ -260,45 +260,6 @@ function toAxisScale(a?: AxisConfig): Record<string, unknown> | undefined {
  * the parsed rows. Empty advanced sections are dropped so the library falls
  * back to its own defaults.
  */
-function catchAllStroke(segs: Segment[]): string | undefined {
-	for (const s of segs) {
-		if ((!s.areas || !s.areas.length) && s.style?.stroke?.stroke) return s.style.stroke.stroke;
-	}
-	return undefined;
-}
-
-/**
- * The library merges a series' catch-all style into its area segments only
- * shallowly: an area segment that sets `stroke.strokeDasharray` (but no colour)
- * replaces the catch-all's whole `stroke` object, dropping the series colour.
- * Here we distribute the `default` segments into every series and deep-inject
- * that series' catch-all colour into area segments that define a stroke without
- * one — so a per-series colour + shared per-range dash/dots both survive.
- */
-export function expandSegments(segments: Segments, seriesNames: string[]): Segments {
-	const defaults = segments['default'] ?? [];
-	const names = new Set<string>([
-		...seriesNames,
-		...Object.keys(segments).filter((k) => k !== 'default')
-	]);
-	const out: Segments = {};
-	for (const name of names) {
-		const specific = segments[name] ?? [];
-		const color = catchAllStroke(specific);
-		const merged = defaults.map((seg) => {
-			const stroke = seg.style?.stroke;
-			if (color && stroke && stroke.stroke == null) {
-				return { ...seg, style: { ...seg.style, stroke: { ...stroke, stroke: color } } };
-			}
-			return seg;
-		});
-		out[name] = [...specific, ...merged];
-	}
-	// If there were only default segments and no real series, keep them.
-	if (!out['default'] && !names.size && defaults.length) out['default'] = defaults;
-	return out;
-}
-
 export function buildChartProps(config: ChartConfig, rows: Record<string, unknown>[]) {
 	const props: Record<string, unknown> = {
 		data: rows,
@@ -321,10 +282,7 @@ export function buildChartProps(config: ChartConfig, rows: Record<string, unknow
 	}
 
 	if (config.segments && Object.keys(config.segments).length) {
-		const seriesNames = config.z
-			? [...new Set(rows.map((r) => String(r[config.z as string])))]
-			: ['series'];
-		props.segments = expandSegments(config.segments, seriesNames);
+		props.segments = config.segments;
 	}
 	if (config.markers?.length) props.markers = config.markers;
 

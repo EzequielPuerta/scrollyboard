@@ -123,8 +123,7 @@ export function generateSvelteFile(scrolly: ScrollyDoc): string {
       if (c.timeline && c.timeline.accessor) p.timeline = c.timeline;
     }
     if (c.segments && Object.keys(c.segments).length) {
-      const names = c.z ? [...new Set(rows.map((r) => String(r[c.z])))] : ['series'];
-      p.segments = expandSegments(resolveColors(c.segments), names);
+      p.segments = resolveColors(c.segments);
     }
     if (c.markers && c.markers.length) p.markers = mapMarkers(resolveColors(c.markers), c);
     const sc = {};
@@ -139,26 +138,6 @@ export function generateSvelteFile(scrolly: ScrollyDoc): string {
     return p;
   }
   function sceneLayout(l) { return l === 'side-by-side' ? SideBySide : l === 'slide' ? Slide : Overlay; }
-  function catchAllStroke(segs) {
-    for (const s of segs) if ((!s.areas || !s.areas.length) && s.style?.stroke?.stroke) return s.style.stroke.stroke;
-  }
-  function expandSegments(segments, seriesNames) {
-    const defaults = segments['default'] ?? [];
-    const names = new Set([...seriesNames, ...Object.keys(segments).filter((k) => k !== 'default')]);
-    const out = {};
-    for (const name of names) {
-      const specific = segments[name] ?? [];
-      const color = catchAllStroke(specific);
-      const merged = defaults.map((seg) => {
-        const stroke = seg.style?.stroke;
-        if (color && stroke && stroke.stroke == null)
-          return { ...seg, style: { ...seg.style, stroke: { ...stroke, stroke: color } } };
-        return seg;
-      });
-      out[name] = [...specific, ...merged];
-    }
-    return out;
-  }
   function mapMarkers(markers, c) {
     return markers.map((m) => {
       if (m.type === 'delta' || m.type === 'peak') {
