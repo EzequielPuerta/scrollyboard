@@ -1,0 +1,36 @@
+services:
+  scrollyboard-app:
+    build: .
+    container_name: scrollyboard-app
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env
+    environment:
+      # CI silences interactive prompts; everything else comes from .env.
+      CI: "true"
+      # Keep pnpm's store in a dedicated volume instead of leaking into the
+      # bind-mounted project root as a root-owned .pnpm-store directory.
+      npm_config_store_dir: /pnpm-store
+    depends_on:
+      - scrollyboard-mongodb
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - pnpm_store:/pnpm-store
+    # Startup (dev server vs. production build) is decided by the Dockerfile
+    # entrypoint based on NODE_ENV. Store dir comes from npm_config_store_dir.
+
+  scrollyboard-mongodb:
+    image: mongo:7
+    container_name: scrollyboard-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: scrollyboard
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
+  pnpm_store:
